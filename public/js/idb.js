@@ -32,4 +32,35 @@ function uploadTransaction() {
   const moneyObjectStore = transaction.objectStore('new_input');
 
   const getAll = moneyObjectStore.getAll();
-}
+
+  getAll.onsuccess = function() {
+    if (getAll.result.length > 0) {
+      fetch('/api/transaction', {
+        method: 'POST',
+        body: JSON.stringify(getAll.result),
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        }
+      })
+        .then(respone => respone.json())
+        .then(serverResponse => {
+          if (serverResponse.message) {
+            throw new Error(serverResponse);
+          }
+          const transaction = db.transaction(['new_input'], 'readwrite');
+
+          const moneyObjectStore = transaction.objectStore('new_input');
+
+          moneyObjectStore.clear();
+
+          alert('All saved transactions have been submitted!');
+        })
+        .catch(err => {
+          console.log(err);
+        })
+    }
+  };
+};
+
+window.addEventListener('online', uploadTransaction);
